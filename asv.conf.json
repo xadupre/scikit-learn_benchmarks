@@ -79,7 +79,7 @@
         "onnxruntime": ["0.4"],
         "pandas": ["0.25"],
 	    "scipy": ["1.2"],
-        "skl2onnx": ["1.5.1"],
+        "skl2onnx": ["1.5.0"],
     },
 
     // Combinations of libraries/python versions can be excluded/included
