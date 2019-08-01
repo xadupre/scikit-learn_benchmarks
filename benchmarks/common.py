@@ -4,7 +4,6 @@ import json
 import timeit
 import pickle
 import itertools
-
 import numpy as np
 
 
@@ -35,10 +34,12 @@ def get_from_config():
     base_folder = config['base_folder']
 
     bench_predict = config['bench_predict']
+    bench_predictproba = config['bench_predictproba']
     bench_transform = config['bench_transform']
+    bench_onnx = config['bench_onnx']
 
     return (profile, n_jobs_vals, save_estimators, save_folder, base_folder,
-            bench_predict, bench_transform)
+            bench_predict, bench_predictproba, bench_transform, bench_onnx)
 
 
 def get_estimator_path(benchmark, folder, params, save=False):
@@ -62,7 +63,7 @@ def clear_tmp():
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         'cache', 'tmp')
     list(map(os.remove, (os.path.join(path, f)
-             for f in os.listdir(path) if f != '.gitignore')))
+                         for f in os.listdir(path) if f != '.gitignore')))
 
 
 class Benchmark:
@@ -71,7 +72,8 @@ class Benchmark:
     timeout = 500
 
     (profile, n_jobs_vals, save_estimators, save_folder, base_folder,
-     bench_predict, bench_transform) = get_from_config()
+     bench_predict, bench_predictproba, bench_transform,
+     bench_onnx) = get_from_config()
 
     if profile == 'fast':
         warmup_time = 0
@@ -126,7 +128,31 @@ class Estimator:
         with open(est_path, 'rb') as f:
             self.estimator = pickle.load(f)
 
+        if Benchmark.bench_onnx:
+            self._setup_onnx()
+
         self.make_scorers()
+
+    def _setup_onnx(self):
+        from skl2onnx import to_onnx
+        try:
+            self.estimator_onnx = to_onnx(self.estimator, self.X[:1])
+        except RuntimeError as e:
+            self.estimator_onnx = None
+        if self.estimator_onnx is not None:
+            from onnxruntime import InferenceSession
+            try:
+                self.estimator_onnx_ort = InferenceSession(
+                    self.estimator_onnx.SerializeToString())
+            except RuntimeError as e:
+                self.estimator_onnx_ort = None
+
+            from mlprodict.onnxrt import OnnxInference
+            try:
+                self.estimator_onnx_pyrt = OnnxInference(
+                    self.estimator_onnx)
+            except RuntimeError as e:
+                self.estimator_onnx_pyrt = None
 
     def time_fit(self, *args):
         self.estimator.fit(self.X, self.y)
@@ -134,31 +160,53 @@ class Estimator:
     def peakmem_fit(self, *args):
         self.estimator.fit(self.X, self.y)
 
-    def track_train_score(self, *args):
+    def track_train_score_skl(self, *args):
         if isinstance(self, Predictor):
             y_pred = self.estimator.predict(self.X)
         else:
             y_pred = None
         return float(self.train_scorer(self.y, y_pred))
 
-    def track_test_score(self, *args):
+    def track_test_score_skl(self, *args):
         if isinstance(self, Predictor):
             y_val_pred = self.estimator.predict(self.X_val)
         else:
             y_val_pred = None
         return float(self.test_scorer(self.y_val, y_val_pred))
 
+    if Benchmark.bench_onnx:
+
+        def track_test_score_ort(self, *args):
+            if (isinstance(self, Predictor) and
+                    self.estimator_onnx_ort is not None):
+                y_val_pred = self.estimator_onnx_ort.run(
+                    None, {'X': self.X_val.astype(np.float32)})[0]
+            else:
+                y_val_pred = None
+            return float(self.test_scorer(self.y_val, y_val_pred))
+
+        def track_test_score_pyrt(self, *args):
+            if (isinstance(self, Predictor) and
+                    self.estimator_onnx_pyrt is not None):
+                res = self.estimator_onnx_pyrt.run(
+                    {'X': self.X_val.astype(np.float32)})
+                y_val_pred = (res['variable']
+                              if 'variable' in res else res['output_label'])
+            else:
+                y_val_pred = None
+            return float(self.test_scorer(self.y_val, y_val_pred))
+
 
 class Predictor:
     if Benchmark.bench_predict:
-        def time_predict(self, *args):
+        def time_predict_skl(self, *args):
             self.estimator.predict(self.X)
 
-        def peakmem_predict(self, *args):
+        def peakmem_predict_skl(self, *args):
             self.estimator.predict(self.X)
 
         if Benchmark.base_folder is not None:
-            def track_same_prediction(self, *args):
+            def track_same_prediction_skl(self, *args):
                 file_path = get_estimator_path(self, Benchmark.base_folder,
                                                args, True)
                 with open(file_path, 'rb') as f:
@@ -169,17 +217,101 @@ class Predictor:
 
                 return np.allclose(y_val_pred_base, y_val_pred)
 
+    if Benchmark.bench_onnx:
+        def time_predict_ort(self, *args):
+            if self.estimator_onnx_ort is not None:
+                self.estimator_onnx_ort.run(
+                    None, {'X': self.X.astype(np.float32)})[0]
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
+        def peakmem_predict_ort(self, *args):
+            if self.estimator_onnx_ort is not None:
+                self.estimator_onnx_ort.run(
+                    None, {'X': self.X.astype(np.float32)})[0]
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
+        def time_predict_pyrt(self, *args):
+            if self.estimator_onnx_pyrt is not None:
+                self.estimator_onnx_pyrt.run(
+                    {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_pyrt could not be created.")
+
+        def peakmem_predict_pyrt(self, *args):
+            if self.estimator_onnx_pyrt is not None:
+                self.estimator_onnx_pyrt.run(
+                    {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_pyrt could not be created.")
+
+
+class Classifier(Predictor):
+
+    if Benchmark.bench_predictproba:
+        def time_predictproba_skl(self, *args):
+            self.estimator.predict_proba(self.X)
+
+        def peakmem_predictproba_skl(self, *args):
+            self.estimator.predict_proba(self.X)
+
+        if Benchmark.base_folder is not None:
+            def track_same_predictionproba_skl(self, *args):
+                file_path = get_estimator_path(self, Benchmark.base_folder,
+                                               args, True)
+                with open(file_path, 'rb') as f:
+                    estimator_base = pickle.load(f)
+
+                y_val_pred_base = estimator_base.predict_proba(self.X_val)
+                y_val_pred = self.estimator.predict_proba(self.X_val)
+
+                return np.allclose(y_val_pred_base, y_val_pred)
+
+        if Benchmark.bench_onnx:
+            def time_predictproba_ort(self, *args):
+                if self.estimator_onnx_ort is not None:
+                    self.estimator_onnx_ort.run(
+                        None, {'X': self.X.astype(np.float32)})[1]
+                else:
+                    raise RuntimeError(
+                        "estimator_onnx_ort could not be created.")
+
+            def peakmem_predictproba_ort(self, *args):
+                if self.estimator_onnx_ort is not None:
+                    self.estimator_onnx_ort.run(
+                        None, {'X': self.X.astype(np.float32)})[1]
+                else:
+                    raise RuntimeError(
+                        "estimator_onnx_ort could not be created.")
+
+            def time_predictproba_pyrt(self, *args):
+                if self.estimator_onnx_pyrt is not None:
+                    self.estimator_onnx_pyrt.run(
+                        {'X': self.X.astype(np.float32)})
+                else:
+                    raise RuntimeError(
+                        "estimator_onnx_pyrt could not be created.")
+
+            def peakmem_predictproba_pyrt(self, *args):
+                if self.estimator_onnx_pyrt is not None:
+                    self.estimator_onnx_pyrt.run(
+                        {'X': self.X.astype(np.float32)})
+                else:
+                    raise RuntimeError(
+                        "estimator_onnx_pyrt could not be created.")
+
 
 class Transformer:
     if Benchmark.bench_transform:
-        def time_transform(self, *args):
+        def time_transform_skl(self, *args):
             self.estimator.transform(self.X)
 
-        def peakmem_transform(self, *args):
+        def peakmem_transform_skl(self, *args):
             self.estimator.transform(self.X)
 
         if Benchmark.base_folder is not None:
-            def track_same_transform(self, *args):
+            def track_same_transform_skl(self, *args):
                 file_path = get_estimator_path(self, Benchmark.base_folder,
                                                args, True)
                 with open(file_path, 'rb') as f:
@@ -189,3 +321,32 @@ class Transformer:
                 X_val_t = self.estimator.transform(self.X_val)
 
                 return np.allclose(X_val_t_base, X_val_t)
+
+    if Benchmark.bench_onnx:
+        def time_transform_ort(self, *args):
+            if self.estimator_onnx_ort is not None:
+                self.estimator_onnx_ort.run(
+                    None, {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
+        def peakmem_transform_ort(self, *args):
+            if self.estimator_onnx_ort is not None:
+                self.estimator_onnx_ort.run(
+                    None, {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
+        def time_transform_pyrt(self, *args):
+            if self.estimator_onnx_pyrt is not None:
+                self.estimator_onnx_pyrt.run(
+                    {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_pyrt could not be created.")
+
+        def peakmem_transform_pyrt(self, *args):
+            if self.estimator_onnx_pyrt is not None:
+                self.estimator_onnx_pyrt.run(
+                    {'X': self.X.astype(np.float32)})
+            else:
+                raise RuntimeError("estimator_onnx_pyrt could not be created.")

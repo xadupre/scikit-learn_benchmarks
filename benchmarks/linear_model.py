@@ -1,7 +1,7 @@
 from sklearn.linear_model import (LogisticRegression, Ridge, ElasticNet, Lasso,
                                   LinearRegression, SGDRegressor)
 
-from .common import Benchmark, Estimator, Predictor
+from .common import Benchmark, Estimator, Predictor, Classifier
 from .datasets import (_20newsgroups_highdim_dataset,
                        _20newsgroups_lowdim_dataset,
                        _synth_regression_dataset,
@@ -9,7 +9,7 @@ from .datasets import (_20newsgroups_highdim_dataset,
 from .utils import make_gen_classif_scorers, make_gen_reg_scorers
 
 
-class LogisticRegression_bench(Benchmark, Estimator, Predictor):
+class LogisticRegression_bench(Benchmark, Estimator, Classifier):
     """
     Benchmarks for LogisticRegression.
     """

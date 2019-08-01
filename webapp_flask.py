@@ -47,7 +47,7 @@ def get_resource(path):  # pragma: no cover
 
 
 if __name__ == '__main__':  # pragma: no cover
-    app.run(# ssl_context=('cert.pem', 'key.pem'),
-            port=8877,
-            # host="",
-            )
+    app.run(  # ssl_context=('cert.pem', 'key.pem'),
+        port=8877,
+        # host="",
+    )

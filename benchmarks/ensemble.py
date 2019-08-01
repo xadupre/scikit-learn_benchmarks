@@ -1,12 +1,12 @@
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-from .common import Benchmark, Estimator, Predictor
+from .common import Benchmark, Estimator, Classifier
 from .datasets import (_20newsgroups_highdim_dataset,
                        _20newsgroups_lowdim_dataset)
 from .utils import make_gen_classif_scorers
 
 
-class RandomForestClassifier_bench(Benchmark, Estimator, Predictor):
+class RandomForestClassifier_bench(Benchmark, Estimator, Classifier):
     """
     Benchmarks for RandomForestClassifier.
     """
@@ -39,7 +39,7 @@ class RandomForestClassifier_bench(Benchmark, Estimator, Predictor):
         make_gen_classif_scorers(self)
 
 
-class GradientBoostingClassifier_bench(Benchmark, Estimator, Predictor):
+class GradientBoostingClassifier_bench(Benchmark, Estimator, Classifier):
     """
     Benchmarks for GradientBoostingClassifier.
     """

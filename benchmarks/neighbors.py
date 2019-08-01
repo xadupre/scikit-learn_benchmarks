@@ -1,11 +1,11 @@
 from sklearn.neighbors import KNeighborsClassifier
 
-from .common import Benchmark, Estimator, Predictor
+from .common import Benchmark, Estimator, Predictor, Classifier
 from .datasets import _20newsgroups_lowdim_dataset
 from .utils import make_gen_classif_scorers
 
 
-class KNeighborsClassifier_bench(Benchmark, Estimator, Predictor):
+class KNeighborsClassifier_bench(Benchmark, Estimator, Classifier):
     """
     Benchmarks for KNeighborsClassifier.
     """

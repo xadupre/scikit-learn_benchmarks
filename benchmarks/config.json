@@ -8,7 +8,7 @@
     //                benchmark scalability and will take hours on single core.
     "profile": "regular",
 
-    // List of values of n_jobs to use for estimators which accept this 
+    // List of values of n_jobs to use for estimators which accept this
     // parameter (-1 means all cores). An empty list means all values from 1 to
     // the maximum number of available cores.
     "n_jobs_vals": [1, 4],
@@ -23,5 +23,7 @@
     // If false, the predict (resp. transform) method of the estimators won't
     // be benchmarked.
     "bench_predict": true,
-    "bench_transform": true
+    "bench_predictproba": true,
+    "bench_transform": true,
+    "bench_onnx": true
 }

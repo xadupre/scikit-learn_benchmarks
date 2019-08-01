@@ -73,7 +73,9 @@
     //
     "matrix": {
         "cython": ["0.29"],
+        "jinja2": ["2.10.1"],
         "joblib": ["0.13"],
+        "mlprodict": ["0.2.272"],
         "numpy": ["1.17"],
         "onnx": ["1.5"],
         "onnxruntime": ["0.4"],
