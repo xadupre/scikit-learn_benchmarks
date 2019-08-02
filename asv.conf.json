@@ -11,7 +11,7 @@
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
-    "repo": "https://github.com/scikit-learn/scikit-learn.git",
+    "repo": "https://github.com/sdpython/mlprodict.git",
     
     // The Python project's subdirectory in your repo.  If missing or
     // the empty string, the project is assumed to be located at the root
@@ -75,13 +75,13 @@
         "cython": ["0.29"],
         "jinja2": ["2.10.1"],
         "joblib": ["0.13"],
-        "mlprodict": ["0.2.363"],
         "numpy": ["1.17"],
         "onnx": ["1.5"],
         "onnxruntime": ["0.5"],
         "pandas": ["0.25"],
 	    "scipy": ["1.2"],
         "skl2onnx": ["1.5.0"],
+        "scikit-learn": ["0.21"],
     },
 
     // Combinations of libraries/python versions can be excluded/included
