@@ -122,6 +122,8 @@ class Estimator:
         data_path = get_data_path(self, params)
         with open(data_path, 'rb') as f:
             self.X, self.X_val, self.y, self.y_val = pickle.load(f)
+        if Benchmark.bench_onnx:
+            self.X32 = self.X.astype(np.float32)
 
         est_path = get_estimator_path(self, Benchmark.save_folder,
                                       params, Benchmark.save_estimators)
@@ -218,31 +220,38 @@ class Predictor:
                 return np.allclose(y_val_pred_base, y_val_pred)
 
     if Benchmark.bench_onnx:
+
+        def time_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
         def time_predict_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
-                    None, {'X': self.X.astype(np.float32)})[0]
+                    None, {'X': self.X32})[0]
             else:
                 raise RuntimeError("estimator_onnx_ort could not be created.")
 
         def peakmem_predict_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
-                    None, {'X': self.X.astype(np.float32)})[0]
+                    None, {'X': self.X32})[0]
             else:
                 raise RuntimeError("estimator_onnx_ort could not be created.")
 
         def time_predict_pyrt(self, *args):
             if self.estimator_onnx_pyrt is not None:
                 self.estimator_onnx_pyrt.run(
-                    {'X': self.X.astype(np.float32)})
+                    {'X': self.X32})
             else:
                 raise RuntimeError("estimator_onnx_pyrt could not be created.")
 
         def peakmem_predict_pyrt(self, *args):
             if self.estimator_onnx_pyrt is not None:
                 self.estimator_onnx_pyrt.run(
-                    {'X': self.X.astype(np.float32)})
+                    {'X': self.X32})
             else:
                 raise RuntimeError("estimator_onnx_pyrt could not be created.")
 

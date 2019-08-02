@@ -4,7 +4,7 @@
     "version": 1,
 
     // The name of the project being benchmarked
-    "project": "scikit-learn + onnx",
+    "project": "scikit-learn_onnx",
 
     // The project's homepage
     "project_url": "http://www.xavierdupre.fr/app/mlprodict/helpsphinx/index.html",
