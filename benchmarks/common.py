@@ -227,6 +227,12 @@ class Predictor:
             else:
                 raise RuntimeError("estimator_onnx_ort could not be created.")
 
+        def peakmem_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
         def time_predict_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
