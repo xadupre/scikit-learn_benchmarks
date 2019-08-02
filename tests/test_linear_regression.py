@@ -29,6 +29,11 @@ class TestLinearRegression_bench(unittest.TestCase):
         self.assertTrue(abs(s1 - s2) < 1e-7)
         self.assertTrue(abs(s1 - s3) < 1e-7)
 
+    def test_astype(self):
+        bench = self.bench
+        bench.time_astype32()
+        bench.peakmem_astype32()
+
     def test_time_predict(self):
         bench = self.bench
         bench.time_predict_skl()
