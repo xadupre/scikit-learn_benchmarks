@@ -338,6 +338,12 @@ class Transformer:
                 return np.allclose(X_val_t_base, X_val_t)
 
     if Benchmark.bench_onnx:
+        def time_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
         def time_transform_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
