@@ -11,6 +11,9 @@ class SVC_bench(Benchmark, Estimator, Classifier):
     param_names = ['kernel']
     params = (['linear', 'poly', 'rbf', 'sigmoid'],)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 

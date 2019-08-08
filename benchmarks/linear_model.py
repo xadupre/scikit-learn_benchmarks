@@ -16,6 +16,9 @@ class LogisticRegression_bench(Benchmark, Estimator, Classifier):
 
     param_names = ['representation', 'solver', 'n_jobs']
     params = (['dense', 'sparse'], ['lbfgs', 'saga'], Benchmark.n_jobs_vals)
+    
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()
@@ -58,6 +61,9 @@ class Ridge_bench(Benchmark, Estimator, Predictor):
     params = (['dense', 'sparse'],
               ['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 
@@ -98,6 +104,9 @@ class LinearRegression_bench(Benchmark, Estimator, Predictor):
     param_names = ['representation']
     params = (['dense', 'sparse'],)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 
@@ -126,6 +135,9 @@ class SGDRegressor_bench(Benchmark, Estimator, Predictor):
 
     param_names = ['representation']
     params = (['dense', 'sparse'],)
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()
@@ -157,6 +169,9 @@ class ElasticNet_bench(Benchmark, Estimator, Predictor):
 
     param_names = ['representation', 'precompute']
     params = (['dense', 'sparse'], [True, False])
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()
@@ -197,6 +212,9 @@ class Lasso_bench(Benchmark, Estimator, Predictor):
 
     param_names = ['representation', 'precompute']
     params = (['dense', 'sparse'], [True, False])
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()

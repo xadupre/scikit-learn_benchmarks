@@ -15,6 +15,9 @@ class KNeighborsClassifier_bench(Benchmark, Estimator, Classifier):
               ['low', 'high'],
               Benchmark.n_jobs_vals)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 

@@ -14,6 +14,9 @@ class RandomForestClassifier_bench(Benchmark, Estimator, Classifier):
     param_names = ['representation', 'n_jobs']
     params = (['dense', 'sparse'], Benchmark.n_jobs_vals)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 
@@ -46,6 +49,9 @@ class GradientBoostingClassifier_bench(Benchmark, Estimator, Classifier):
 
     param_names = ['representation']
     params = (['dense', 'sparse'],)
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()

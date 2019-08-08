@@ -16,6 +16,9 @@ class CrossValidation_bench(Benchmark):
     param_names = ['n_jobs']
     params = (Benchmark.n_jobs_vals,)
 
+    def is_benchmark(self):
+        return True
+
     def setup(self, *params):
         n_jobs, = params
 
@@ -51,6 +54,9 @@ class GridSearch_bench(Benchmark, Estimator, Predictor):
 
     param_names = ['n_jobs']
     params = (Benchmark.n_jobs_vals,)
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()

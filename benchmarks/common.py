@@ -4,6 +4,7 @@ import json
 import timeit
 import pickle
 import itertools
+from abc import ABC, abstractmethod
 import numpy as np
 
 
@@ -92,7 +93,12 @@ class Benchmark:
         data_size = 'large'
 
 
-class Estimator:
+class Estimator(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     def setup_cache(self):
         clear_tmp()
 
@@ -199,7 +205,12 @@ class Estimator:
             return float(self.test_scorer(self.y_val, y_val_pred))
 
 
-class Predictor:
+class Predictor(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_predict:
         def time_predict_skl(self, *args):
             self.estimator.predict(self.X)
@@ -262,8 +273,12 @@ class Predictor:
                 raise RuntimeError("estimator_onnx_pyrt could not be created.")
 
 
-class Classifier(Predictor):
+class Classifier(Predictor, ABC):
 
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_predictproba:
         def time_predictproba_skl(self, *args):
             self.estimator.predict_proba(self.X)
@@ -317,7 +332,12 @@ class Classifier(Predictor):
                         "estimator_onnx_pyrt could not be created.")
 
 
-class Transformer:
+class Transformer(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_transform:
         def time_transform_skl(self, *args):
             self.estimator.transform(self.X)

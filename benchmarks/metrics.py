@@ -14,6 +14,9 @@ class PairwiseDistances_bench(Benchmark):
               ['cosine', 'euclidean', 'manhattan', 'correlation'],
               Benchmark.n_jobs_vals)
 
+    def is_benchmark(self):
+        return True
+
     def setup(self, *params):
         representation, metric, n_jobs = params
 
