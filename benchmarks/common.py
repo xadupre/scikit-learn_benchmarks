@@ -183,7 +183,7 @@ class Estimator(ABC):
         return float(self.test_scorer(self.y_val, y_val_pred))
 
     if Benchmark.bench_onnx:
-
+        
         def track_test_score_ort(self, *args):
             if (isinstance(self, Predictor) and
                     self.estimator_onnx_ort is not None):
@@ -198,8 +198,10 @@ class Estimator(ABC):
                     self.estimator_onnx_pyrt is not None):
                 res = self.estimator_onnx_pyrt.run(
                     {'X': self.X_val.astype(np.float32)})
-                y_val_pred = (res['variable']
-                              if 'variable' in res else res['output_label'])
+                for name in ['variable', 'output_label', 'label']:
+                    if name in res:
+                        y_val_pred = res[name]
+                        break
             else:
                 y_val_pred = None
             return float(self.test_scorer(self.y_val, y_val_pred))
