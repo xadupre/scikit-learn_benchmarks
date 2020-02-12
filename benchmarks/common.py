@@ -147,7 +147,11 @@ class Estimator:
             except RuntimeError as e:
                 self.estimator_onnx_ort = None
 
-            from mlprodict.onnxrt import OnnxInference
+            try:
+                from mlprodict.onnxrt import OnnxInference
+            except ImportError:
+                self.estimator_onnx_pyrt = None
+                return
             try:
                 self.estimator_onnx_pyrt = OnnxInference(
                     self.estimator_onnx)
