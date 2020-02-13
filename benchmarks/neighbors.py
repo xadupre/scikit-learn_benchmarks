@@ -1,6 +1,6 @@
 from sklearn.neighbors import KNeighborsClassifier
 
-from .common import Benchmark, Estimator, Predictor, Classifier
+from .common import Benchmark, Estimator, Predictor, Classifier, ONNX_TARGET_OPSET
 from .datasets import _20newsgroups_lowdim_dataset
 from .utils import make_gen_classif_scorers
 
@@ -40,7 +40,8 @@ class KNeighborsClassifier_bench(Benchmark, Estimator, Classifier):
         self.estimator_onnx = to_onnx(
             self.estimator, self.X[:1],
             options={id(self.estimator): {'optim': 'cdist',
-                                          'zipmap': False}})
+                                          'zipmap': False}},
+            target_opset=ONNX_TARGET_OPSET)
 
     def make_scorers(self):
         make_gen_classif_scorers(self)

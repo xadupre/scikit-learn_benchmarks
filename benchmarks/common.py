@@ -9,6 +9,9 @@ import numpy as np
 from sklearn.base import is_classifier
 
 
+ONNX_TARGET_OPSET = 11
+
+
 def get_from_config():
     current_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -147,9 +150,12 @@ class Estimator(ABC):
         if is_classifier(self.estimator):
             self.estimator_onnx = to_onnx(
                 self.estimator, self.X[:1],
-                options={id(self.estimator): {'zipmap': False}})
+                options={id(self.estimator): {'zipmap': False}},
+                target_opset=ONNX_TARGET_OPSET)
         else:
-            self.estimator_onnx = to_onnx(self.estimator, self.X[:1])
+            self.estimator_onnx = to_onnx(
+                self.estimator, self.X[:1],
+                target_opset=ONNX_TARGET_OPSET)
 
     def _setup_onnx(self):
         try:
