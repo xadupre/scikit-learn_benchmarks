@@ -33,8 +33,14 @@ class KNeighborsClassifier_bench(Benchmark, Estimator, Classifier):
 
         estimator = KNeighborsClassifier(algorithm=algorithm,
                                          n_jobs=n_jobs)
-
         return data, estimator
+
+    def _setup_to_onnx(self):
+        from skl2onnx import to_onnx
+        self.estimator_onnx = to_onnx(
+            self.estimator, self.X[:1],
+            options={id(self.estimator): {'optim': 'cdist',
+                                          'zipmap': False}})
 
     def make_scorers(self):
         make_gen_classif_scorers(self)

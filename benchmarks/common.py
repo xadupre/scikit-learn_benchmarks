@@ -6,6 +6,7 @@ import pickle
 import itertools
 from abc import ABC, abstractmethod
 import numpy as np
+from sklearn.base import is_classifier
 
 
 def get_from_config():
@@ -141,10 +142,18 @@ class Estimator(ABC):
 
         self.make_scorers()
 
-    def _setup_onnx(self):
+    def _setup_to_onnx(self):
         from skl2onnx import to_onnx
-        try:
+        if is_classifier(self.estimator):
+            self.estimator_onnx = to_onnx(
+                self.estimator, self.X[:1],
+                options={id(self.estimator): {'zipmap': False}})
+        else:
             self.estimator_onnx = to_onnx(self.estimator, self.X[:1])
+
+    def _setup_onnx(self):
+        try:
+            self._setup_to_onnx()
         except RuntimeError as e:
             self.estimator_onnx = None
         if self.estimator_onnx is not None:
