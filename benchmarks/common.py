@@ -4,7 +4,12 @@ import json
 import timeit
 import pickle
 import itertools
+from abc import ABC, abstractmethod
 import numpy as np
+from sklearn.base import is_classifier
+
+
+ONNX_TARGET_OPSET = 11
 
 
 def get_from_config():
@@ -92,7 +97,12 @@ class Benchmark:
         data_size = 'large'
 
 
-class Estimator:
+class Estimator(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     def setup_cache(self):
         clear_tmp()
 
@@ -122,6 +132,8 @@ class Estimator:
         data_path = get_data_path(self, params)
         with open(data_path, 'rb') as f:
             self.X, self.X_val, self.y, self.y_val = pickle.load(f)
+        if Benchmark.bench_onnx:
+            self.X32 = self.X.astype(np.float32)
 
         est_path = get_estimator_path(self, Benchmark.save_folder,
                                       params, Benchmark.save_estimators)
@@ -133,10 +145,21 @@ class Estimator:
 
         self.make_scorers()
 
-    def _setup_onnx(self):
+    def _setup_to_onnx(self):
         from skl2onnx import to_onnx
+        if is_classifier(self.estimator):
+            self.estimator_onnx = to_onnx(
+                self.estimator, self.X[:1],
+                options={id(self.estimator): {'zipmap': False}},
+                target_opset=ONNX_TARGET_OPSET)
+        else:
+            self.estimator_onnx = to_onnx(
+                self.estimator, self.X[:1],
+                target_opset=ONNX_TARGET_OPSET)
+
+    def _setup_onnx(self):
         try:
-            self.estimator_onnx = to_onnx(self.estimator, self.X[:1])
+            self._setup_to_onnx()
         except RuntimeError as e:
             self.estimator_onnx = None
         if self.estimator_onnx is not None:
@@ -179,7 +202,7 @@ class Estimator:
         return float(self.test_scorer(self.y_val, y_val_pred))
 
     if Benchmark.bench_onnx:
-
+        
         def track_test_score_ort(self, *args):
             if (isinstance(self, Predictor) and
                     self.estimator_onnx_ort is not None):
@@ -194,14 +217,21 @@ class Estimator:
                     self.estimator_onnx_pyrt is not None):
                 res = self.estimator_onnx_pyrt.run(
                     {'X': self.X_val.astype(np.float32)})
-                y_val_pred = (res['variable']
-                              if 'variable' in res else res['output_label'])
+                for name in ['variable', 'output_label', 'label']:
+                    if name in res:
+                        y_val_pred = res[name]
+                        break
             else:
                 y_val_pred = None
             return float(self.test_scorer(self.y_val, y_val_pred))
 
 
-class Predictor:
+class Predictor(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_predict:
         def time_predict_skl(self, *args):
             self.estimator.predict(self.X)
@@ -222,37 +252,54 @@ class Predictor:
                 return np.allclose(y_val_pred_base, y_val_pred)
 
     if Benchmark.bench_onnx:
+
+        def time_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
+        def peakmem_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
         def time_predict_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
-                    None, {'X': self.X.astype(np.float32)})[0]
+                    None, {'X': self.X32})[0]
             else:
                 raise RuntimeError("estimator_onnx_ort could not be created.")
 
         def peakmem_predict_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(
-                    None, {'X': self.X.astype(np.float32)})[0]
+                    None, {'X': self.X32})[0]
             else:
                 raise RuntimeError("estimator_onnx_ort could not be created.")
 
         def time_predict_pyrt(self, *args):
             if self.estimator_onnx_pyrt is not None:
                 self.estimator_onnx_pyrt.run(
-                    {'X': self.X.astype(np.float32)})
+                    {'X': self.X32})
             else:
                 raise RuntimeError("estimator_onnx_pyrt could not be created.")
 
         def peakmem_predict_pyrt(self, *args):
             if self.estimator_onnx_pyrt is not None:
                 self.estimator_onnx_pyrt.run(
-                    {'X': self.X.astype(np.float32)})
+                    {'X': self.X32})
             else:
                 raise RuntimeError("estimator_onnx_pyrt could not be created.")
 
 
-class Classifier(Predictor):
+class Classifier(Predictor, ABC):
 
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_predictproba:
         def time_predictproba_skl(self, *args):
             self.estimator.predict_proba(self.X)
@@ -306,7 +353,12 @@ class Classifier(Predictor):
                         "estimator_onnx_pyrt could not be created.")
 
 
-class Transformer:
+class Transformer(ABC):
+
+    @abstractmethod
+    def is_benchmark(self):
+        return False
+    
     if Benchmark.bench_transform:
         def time_transform_skl(self, *args):
             self.estimator.transform(self.X)
@@ -327,6 +379,12 @@ class Transformer:
                 return np.allclose(X_val_t_base, X_val_t)
 
     if Benchmark.bench_onnx:
+        def time_astype32(self, *args):
+            if self.estimator_onnx_ort is not None:
+                return self.X.astype(np.float32, copy=False)
+            else:
+                raise RuntimeError("estimator_onnx_ort could not be created.")
+
         def time_transform_ort(self, *args):
             if self.estimator_onnx_ort is not None:
                 self.estimator_onnx_ort.run(

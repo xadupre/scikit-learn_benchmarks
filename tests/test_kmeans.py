@@ -2,16 +2,16 @@
 Unit tests.
 """
 import unittest
-from benchmarks.linear_model import LinearRegression_bench
+from benchmarks.cluster import KMeans_bench
 
 
-class TestLinearRegression_bench(unittest.TestCase):
+class TestKMeans_bench(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.bench = LinearRegression_bench()
+        cls.bench = KMeans_bench()
         cls.bench.setup_cache()
-        cls.bench.setup('dense', )
+        cls.bench.setup('dense', 'full', 1)
 
     def test_setup(self):
         self.assertFalse(self.bench is None)

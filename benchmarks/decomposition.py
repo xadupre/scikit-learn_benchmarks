@@ -14,6 +14,9 @@ class PCA_bench(Benchmark, Estimator, Transformer):
     param_names = ['svd_solver']
     params = (['full', 'arpack', 'randomized'],)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 
@@ -39,6 +42,9 @@ class DictionaryLearning_bench(Benchmark, Estimator, Transformer):
 
     param_names = ['fit_algorithm', 'n_jobs']
     params = (['lars', 'cd'], Benchmark.n_jobs_vals)
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()
@@ -69,6 +75,9 @@ class MiniBatchDictionaryLearning_bench(Benchmark, Estimator, Transformer):
 
     param_names = ['fit_algorithm', 'n_jobs']
     params = (['lars', 'cd'], Benchmark.n_jobs_vals)
+
+    def is_benchmark(self):
+        return True
 
     def setup_cache(self):
         super().setup_cache()

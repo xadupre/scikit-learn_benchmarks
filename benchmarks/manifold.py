@@ -12,6 +12,9 @@ class TSNE_bench(Benchmark, Estimator):
     param_names = ['method']
     params = (['exact', 'barnes_hut'],)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 

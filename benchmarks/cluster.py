@@ -17,6 +17,9 @@ class KMeans_bench(Benchmark, Estimator, Predictor, Transformer):
     param_names = ['representation', 'algorithm', 'n_jobs']
     params = (['dense', 'sparse'], ['full', 'elkan'], Benchmark.n_jobs_vals)
 
+    def is_benchmark(self):
+        return True
+
     def setup_cache(self):
         super().setup_cache()
 
@@ -76,6 +79,9 @@ class KMeansPlusPlus_bench(Benchmark):
 
     param_names = ['representation']
     params = (['dense', 'sparse'],)
+
+    def is_benchmark(self):
+        return True
 
     def setup(self, *params):
         representation, = params

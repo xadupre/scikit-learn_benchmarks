@@ -4,14 +4,14 @@
     "version": 1,
 
     // The name of the project being benchmarked
-    "project": "scikit-learn",
+    "project": "mlprodict",
 
     // The project's homepage
-    "project_url": "scikit-learn.org/",
+    "project_url": "http://www.xavierdupre.fr/app/mlprodict/helpsphinx/index.html",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
-    "repo": "https://github.com/scikit-learn/scikit-learn.git",
+    "repo": "https://github.com/sdpython/mlprodict.git",
     
     // The Python project's subdirectory in your repo.  If missing or
     // the empty string, the project is assumed to be located at the root
@@ -72,16 +72,17 @@
     // followed by the pip installed packages).
     //
     "matrix": {
-        "cython": ["0.29"],
-        "jinja2": ["2.10"],
-        "joblib": ["0.14"],
-        "mlprodict": ["0.3"],
-        "numpy": ["1.18"],
-        "onnx": ["1.6"],
-        "onnxruntime": ["1.1"],
-        "pandas": ["0.25"],
-	    "scipy": ["1.3"],
-        "skl2onnx": ["1.6"],
+        "cython": [],
+        "jinja2": [],
+        "joblib": [],
+        "numpy": [],
+        "onnx": [],
+        "onnxruntime": [],
+        "pandas": [],
+        "Pillow": [],
+	    "scipy": [],
+        "skl2onnx": [],
+        "scikit-learn": [],
     },
 
     // Combinations of libraries/python versions can be excluded/included
